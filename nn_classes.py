@@ -41,10 +41,18 @@ class AtomwiseWithProcessing(nn.Module):
         result: dictionary with predictions stored in result[out_key]
     """
 
-    def __init__(self, n_in=128, n_out=1, n_layers=5, n_neurons=None,
-                 activation=spk.nn.activations.shifted_softplus,
-                 preprocess_layers=None, postprocess_layers=None,
-                 in_key='representation', out_key='y'):
+    def __init__(
+        self,
+        n_in=128,
+        n_out=1,
+        n_layers=5,
+        n_neurons=None,
+        activation=spk.nn.activations.shifted_softplus,
+        preprocess_layers=None,
+        postprocess_layers=None,
+        in_key="representation",
+        out_key="y",
+    ):
 
         super(AtomwiseWithProcessing, self).__init__()
 
@@ -114,13 +122,14 @@ class AtomwiseWithProcessing(nn.Module):
             result = {self.out_key: result}
 
         return result
-        '''
+        """
         AtomwiseWithProcessing类的具体作用是构建一个神经网络模型，
         用于处理原子级别的数据。它可以接受原子的表示作为输入，
         并通过预处理、原子级别的密集层、后处理等操作，对输入数据进行处理和预测。
         这个类的设计目的是为了能够灵活地处理原子级别的特征，
         并根据具体任务进行预处理、预测和后处理
-        '''
+        """
+
 
 class RepresentationConditioning(nn.Module):
     r"""
@@ -158,15 +167,17 @@ class RepresentationConditioning(nn.Module):
         result: dictionary with predictions stored in result[out_key]
     """
 
-    def __init__(self,
-                 layers,
-                 mode='stack',
-                 n_global_cond_features=128,
-                 n_layers=5,
-                 n_neurons=None,
-                 activation=spk.nn.activations.shifted_softplus,
-                 in_key='representation',
-                 out_key='representation'):
+    def __init__(
+        self,
+        layers,
+        mode="stack",
+        n_global_cond_features=128,
+        n_layers=5,
+        n_neurons=None,
+        activation=spk.nn.activations.shifted_softplus,
+        in_key="representation",
+        out_key="representation",
+    ):
 
         super(RepresentationConditioning, self).__init__()
 
@@ -184,7 +195,7 @@ class RepresentationConditioning(nn.Module):
 
         # set number of additional features
         self.n_additional_features = 0
-        if self.mode == 'stack':
+        if self.mode == "stack":
             self.n_additional_features = self.n_global_cond_features
 
         # compute number of inputs to the MLP processing stacked conditioning vectors
@@ -218,8 +229,8 @@ class RepresentationConditioning(nn.Module):
 
         # get mask that (potentially) hides conditional information
         _size = [1, len(self.layers)] + [1 for _ in repr.size()[1:]]
-        if '_cond_mask' in inputs:
-            cond_mask = inputs['_cond_mask']
+        if "_cond_mask" in inputs:
+            cond_mask = inputs["_cond_mask"]
             cond_mask = cond_mask.reshape([cond_mask.shape[0]] + _size[1:])
         else:
             cond_mask = torch.ones(_size, dtype=repr.dtype, device=repr.device)
@@ -233,21 +244,21 @@ class RepresentationConditioning(nn.Module):
         cond_vecs = torch.cat(cond_vecs, dim=-1)
         final_cond_vec = self.cond_mlp(cond_vecs)
 
-        if self.mode == 'addition':
+        if self.mode == "addition":
             repr = repr + final_cond_vec
-        elif self.mode == 'multiplication':
+        elif self.mode == "multiplication":
             repr = repr * final_cond_vec
-        elif self.mode == 'stack':
+        elif self.mode == "stack":
             repr = torch.cat([repr, final_cond_vec.expand(*repr.size()[:-1], -1)], -1)
 
         inputs.update({self.out_key: repr})
 
         return {}
-        '''
+        """
         接受多个网络提供的条件信息向量，并将这些向量堆叠起来。
         通过一个全连接的多层感知机（MLP）来处理堆叠的条件向量，得到一个全局条件向量。
         将全局条件向量与提取的特征表示进行合并，以实现特征表示的条件调节。
-        '''
+        """
 
 
 ### METRICS ###
@@ -271,20 +282,26 @@ class KLDivergence(Metric):
             用于评估模型在概率分布方面的准确性
     """
 
-    def __init__(self, target='_labels', model_output='y', name=None,
-                 mask=None, inverse_mask=False):
-        name = 'KLD_' + target if name is None else name
+    def __init__(
+        self,
+        target="_labels",
+        model_output="y",
+        name=None,
+        mask=None,
+        inverse_mask=False,
+    ):
+        name = "KLD_" + target if name is None else name
         super(KLDivergence, self).__init__(name)
         self.target = target
         self.model_output = model_output
-        self.loss = 0.
-        self.n_entries = 0.
+        self.loss = 0.0
+        self.n_entries = 0.0
         self.mask_str = mask
         self.inverse_mask = inverse_mask
 
     def reset(self):
-        self.loss = 0.
-        self.n_entries = 0.
+        self.loss = 0.0
+        self.n_entries = 0.0
 
     def add_batch(self, batch, result):
         # extract true labels
@@ -303,7 +320,7 @@ class KLDivergence(Metric):
         log_yp = F.log_softmax(yp, -1)
 
         # apply KL divergence formula entry-wise
-        loss = F.kl_div(log_yp, y, reduction='none')
+        loss = F.kl_div(log_yp, y, reduction="none")
 
         # sum over last dimension to get KL divergence per distribution
         loss = torch.sum(loss, -1)
@@ -312,7 +329,7 @@ class KLDivergence(Metric):
         if self.mask_str is not None:
             atom_mask = batch[self.mask_str]
             if self.inverse_mask:
-                atom_mask = 1.-atom_mask
+                atom_mask = 1.0 - atom_mask
             loss = torch.where(atom_mask > 0, loss, torch.zeros_like(loss))
             n_entries = torch.sum(atom_mask > 0)
         else:
@@ -323,10 +340,11 @@ class KLDivergence(Metric):
         self.loss += torch.sum(loss).detach().cpu().data.numpy()
 
     def aggregate(self):
-        return self.loss / max(self.n_entries, 1.)
-    '''用于计算平均KL散度。具体来说，
+        return self.loss / max(self.n_entries, 1.0)
+
+    """用于计算平均KL散度。具体来说，
     它将已经累积的KL散度损失除以累积的条目数，并返回计算得到的平均值  
-    '''
+    """
 
 
 ### PRE- AND POST-PROCESSING LAYERS ###
@@ -348,9 +366,13 @@ class EmbeddingMultiplication(nn.Module):
         从而提高模型在处理原子级数据时的性能和准确性。
     """
 
-    def __init__(self, embedding, in_key_types='_next_types',
-                 in_key_representation='representation',
-                 out_key='preprocessed_representation'):
+    def __init__(
+        self,
+        embedding,
+        in_key_types="_next_types",
+        in_key_representation="representation",
+        out_key="preprocessed_representation",
+    ):
         super(EmbeddingMultiplication, self).__init__()
         self.embedding = embedding
         self.in_key_types = in_key_types
@@ -390,7 +412,7 @@ class EmbeddingMultiplication(nn.Module):
         # if representation is larger than the embedding, pad embedding with ones
         if repr.size()[-1] != emb.size()[-1]:
             _emb = torch.ones([*emb.size()[:-1], repr.size()[-1]], device=emb.device)
-            _emb[..., :emb.size()[-1]] = emb
+            _emb[..., : emb.size()[-1]] = emb
             emb = _emb
 
         # multiply embedded types with representation
@@ -429,28 +451,36 @@ class NormalizeAndAggregate(nn.Module):
     对输入数据进行归一化和聚合操作，并返回处理后的结果
     """
 
-    def __init__(self, normalize=True, normalization_axis=-1,
-                 normalization_mode='logsoftmax', aggregate=True,
-                 aggregation_axis=-1, aggregation_mode='sum', keepdim=True,
-                 mask=None, squeeze=False):
+    def __init__(
+        self,
+        normalize=True,
+        normalization_axis=-1,
+        normalization_mode="logsoftmax",
+        aggregate=True,
+        aggregation_axis=-1,
+        aggregation_mode="sum",
+        keepdim=True,
+        mask=None,
+        squeeze=False,
+    ):
 
         super(NormalizeAndAggregate, self).__init__()
 
         if normalize:
-            if normalization_mode.lower() == 'logsoftmax':
+            if normalization_mode.lower() == "logsoftmax":
                 self.normalization = nn.LogSoftmax(normalization_axis)
         else:
             self.normalization = None
 
         if aggregate:
-            if aggregation_mode.lower() == 'sum':
-                self.aggregation =\
-                    spk.nn.base.Aggregate(aggregation_axis, mean=False,
-                                          keepdim=keepdim)
-            elif aggregation_mode.lower() == 'mean':
-                self.aggregation =\
-                    spk.nn.base.Aggregate(aggregation_axis, mean=True,
-                                          keepdim=keepdim)
+            if aggregation_mode.lower() == "sum":
+                self.aggregation = spk.nn.base.Aggregate(
+                    aggregation_axis, mean=False, keepdim=keepdim
+                )
+            elif aggregation_mode.lower() == "mean":
+                self.aggregation = spk.nn.base.Aggregate(
+                    aggregation_axis, mean=True, keepdim=keepdim
+                )
         else:
             self.aggregation = None
 
@@ -518,17 +548,18 @@ class AtomCompositionEmbedding(nn.Module):
         将分子中所有原子类型嵌入并将它们聚合成一个表示分子组成的单一表示
     """
 
-
-    def __init__(self,
-                 embedding,
-                 n_out=128,
-                 n_layers=5,
-                 n_neurons=None,
-                 activation=spk.nn.activations.shifted_softplus,
-                 type_weighting='exact',
-                 in_key_composition='composition',
-                 n_types=5,
-                 skip_h=True):
+    def __init__(
+        self,
+        embedding,
+        n_out=128,
+        n_layers=5,
+        n_neurons=None,
+        activation=spk.nn.activations.shifted_softplus,
+        type_weighting="exact",
+        in_key_composition="composition",
+        n_types=5,
+        skip_h=True,
+    ):
 
         super(AtomCompositionEmbedding, self).__init__()
 
@@ -563,14 +594,14 @@ class AtomCompositionEmbedding(nn.Module):
         # get composition to embed from inputs
         compositions = inputs[self.in_key_composition][..., None]
         if self.skip_h:
-            embeded_types = self.embedding(inputs['_all_types'][0, 1:-1])[None, ...]
+            embeded_types = self.embedding(inputs["_all_types"][0, 1:-1])[None, ...]
         else:
-            embeded_types = self.embedding(inputs['_all_types'][0, :-1])[None, ...]
+            embeded_types = self.embedding(inputs["_all_types"][0, :-1])[None, ...]
 
         # get global representation
-        if self.type_weighting == 'relative':
-            compositions = compositions/torch.sum(compositions, dim=-2, keepdim=True)
-        elif self.type_weighting == 'existence':
+        if self.type_weighting == "relative":
+            compositions = compositions / torch.sum(compositions, dim=-2, keepdim=True)
+        elif self.type_weighting == "existence":
             compositions = (compositions > 0).float()
 
         # multiply embedding with (weighted) composition
@@ -578,7 +609,7 @@ class AtomCompositionEmbedding(nn.Module):
 
         # aggregate embeddings to global representation
         sizes = embedding.size()
-        embedding = embedding.view([*sizes[:-2], 1, sizes[-2]*sizes[-1]])  # stack
+        embedding = embedding.view([*sizes[:-2], 1, sizes[-2] * sizes[-1]])  # stack
         embedding = self.aggregation_mlp(embedding)  # aggregate
 
         return embedding
@@ -605,9 +636,15 @@ class FingerprintEmbedding(nn.Module):
             将分子的指纹映射到用于条件处理的特征向量中
     """
 
-    def __init__(self, n_in, n_out, n_layers=5, n_neurons=None,
-                 in_key_fingerprint='fingerprint',
-                 activation=spk.nn.activations.shifted_softplus):
+    def __init__(
+        self,
+        n_in,
+        n_out,
+        n_layers=5,
+        n_neurons=None,
+        in_key_fingerprint="fingerprint",
+        activation=spk.nn.activations.shifted_softplus,
+    ):
 
         super(FingerprintEmbedding, self).__init__()
 
@@ -669,9 +706,20 @@ class PropertyEmbedding(nn.Module):
             以便于后续的分子信息学分析、条件处理或其他任务中的使用。
     """
 
-    def __init__(self, n_in, n_out, in_key_property, start, stop, n_layers=5,
-                 n_neurons=None, activation=spk.nn.activations.shifted_softplus,
-                 trainable_gaussians=False, width=None, no_expansion=False):
+    def __init__(
+        self,
+        n_in,
+        n_out,
+        in_key_property,
+        start,
+        stop,
+        n_layers=5,
+        n_neurons=None,
+        activation=spk.nn.activations.shifted_softplus,
+        trainable_gaussians=False,
+        width=None,
+        no_expansion=False,
+    ):
 
         super(PropertyEmbedding, self).__init__()
 
@@ -679,8 +727,9 @@ class PropertyEmbedding(nn.Module):
         self.n_in = n_in
         self.n_out = n_out
         if not no_expansion:
-            self.expansion_net = GaussianExpansion(start, stop, self.n_in,
-                                                   trainable_gaussians, width)
+            self.expansion_net = GaussianExpansion(
+                start, stop, self.n_in, trainable_gaussians, width
+            )
         else:
             self.expansion_net = None
 
@@ -726,14 +775,14 @@ class GaussianExpansion(nn.Module):
 
     """
 
-    def __init__(self, start, stop, n_gaussians=50, trainable=False,
-                 width=None):
+    def __init__(self, start, stop, n_gaussians=50, trainable=False, width=None):
         super(GaussianExpansion, self).__init__()
         # compute offset and width of Gaussian functions
         offset = torch.linspace(start, stop, n_gaussians)
         if width is None:
-            widths = torch.FloatTensor((offset[1] - offset[0]) *
-                                       torch.ones_like(offset))
+            widths = torch.FloatTensor(
+                (offset[1] - offset[0]) * torch.ones_like(offset)
+            )
         else:
             widths = torch.FloatTensor(width * torch.ones_like(offset))
         if trainable:

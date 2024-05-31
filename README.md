@@ -9,8 +9,7 @@ If you are using cG-SchNet in your research, please cite the corresponding publi
 
 N.W.A. Gebauer, M. Gastegger, S.S.P. Hessmann, K.-R. Müller, and K.T. Schütt.  
 Inverse design of 3d molecular structures with conditional generative neural networks.  
-Nature Communications 13, 973 (2022). https://doi.org/10.1038/s41467-022-28526-y
-
+Nature Communications 13, 973 (2022). <https://doi.org/10.1038/s41467-022-28526-y>
 
     @Article{gebauer2022inverse,
         author={Gebauer, Niklas W. A. and Gastegger, Michael and Hessmann, Stefaan S. P. and M{\"u}ller, Klaus-Robert and Sch{\"u}tt, Kristof T.},
@@ -25,12 +24,12 @@ Nature Communications 13, 973 (2022). https://doi.org/10.1038/s41467-022-28526-y
         url={https://doi.org/10.1038/s41467-022-28526-y}
     }
 
-
 The code provided in this repository allows to train cG-SchNet on the tasks presented in the paper using the QM9 data set which consists of approximately 130k small molecules with up to nine heavy atoms from fluorine, oxygen, nitrogen, and carbon.
 
 We also provide links to the molecules generated with cG-SchNet for the paper as well as two pretrained models used therein. For details, please refer to the folder [_published_data_](https://github.com/atomistic-machine-learning/cG-SchNet/tree/main/published_data).
 
 ### Requirements
+
 - schnetpack 0.3
 - pytorch >= 1.2
 - python >= 3.7
@@ -41,11 +40,11 @@ We also provide links to the molecules generated with cG-SchNet for the paper as
 In the following, we describe the setup using Anaconda.
 
 The following commands will create a new conda environment called _"cgschnet"_ and install all dependencies (tested on Ubuntu 18.04 and 20.04):
-    
+
     conda create -n cgschnet python=3.7 pytorch=1.5.1 torchvision cudatoolkit=10.2 ase=3.19.0 openbabel=2.4.1 rdkit=2019.09.2.0 -c pytorch -c openbabel -c defaults -c conda-forge
     conda activate cgschnet
     pip install 'schnetpack==0.3'
-    
+
 Replace _"cudatoolkit=10.2"_ with _"cpuonly"_ if you do not want to utilize a GPU for training/generation. However, we strongly recommend to use a GPU if available.
 
 To observe the training progress, install tensorboard:
@@ -53,12 +52,13 @@ To observe the training progress, install tensorboard:
     pip install tensorboard
 
 # Getting started
+
 Clone the repository into your folder of choice:
 
     git clone https://github.com/atomistic-machine-learning/cG-SchNet.git
 
-
 ### Training a model
+
 A model conditioned on the composition of molecules and their relative atomic energy with the same settings as described in the paper can be trained by running gschnet_cond_script.py with the following parameters:
 
     python ./cG-SchNet/gschnet_cond_script.py train gschnet ./data/ ./models/cgschnet/ --conditioning_json_path ./cG-SchNet/conditioning_specifications/4_comp_relenergy.json --split_path ./cG-SchNet/splits/4_comp_relenergy_split.npz --cuda
@@ -71,11 +71,11 @@ If you want to train on a new data split, remove _--split_path_ from the call an
 The training of the full model takes about 40 hours on a A100 GPU. For testing purposes, you can leave the training running for only a couple of epochs. An epoch should take 10-20 min, depending on your hardware. To observe the training progress, use TensorBoard:
 
     tensorboard --logdir=./models
-    
 
 The logs will appear after the first epoch has completed.
 
 ### Generating molecules
+
 Running the script with the following arguments will generate 1000 molecules using the composition C7O2H10 and relative atomic energy of -0.1 as conditions using the trained model at ./model/cgschnet/ and store them in ./model/cgschnet/generated/generated.mol_dict:
 
     python ./cG-SchNet/gschnet_cond_script.py generate gschnet ./models/cgschnet/ 1000 --conditioning "composition 10 7 0 2 0; n_atoms 19; relative_atomic_energy -0.1" --cuda
@@ -85,10 +85,11 @@ Remove _--cuda_ from the call if you want to run on the CPU. Add _--show_gen_ to
 Note that the conditions for sampling are provided as a string using the _--conditioning_ argument. You have to provide the name of the property (as given in the field _in\_key\_property_ in the conditioning specification json without trailing underscore) followed by the target value(s). Each property the model was conditioned on, i.e. as listed in one of the layers in the conditioning specification json, has to be provided. Otherwise, the target value will be set to zero which often is an inappropriate value and thus may lead to invalid molecules. The composition of molecules is given as the number of atoms of type h, c, n, o, f (in that particular order). When conditioning on fingerprints, the value can either be an index (which is used to load the fingerprint of the corresponding molecule in the ```./data/qm9gen.db``` data base) or a SMILES string.
 
 ### Filtering and analysis of generated molecules
+
 After generation, the generated molecules can be filtered for invalid and duplicate structures by running filter_generated.py:
 
     python ./cG-SchNet/filter_generated.py ./models/cgschnet/generated/generated.mol_dict --train_data_path ./data/qm9gen.db --model_path ./models/cgschnet
-    
+
 The script will print its progress and the gathered results.
 The script checks the valency constraints (e.g. every hydrogen atom should have exactly one bond), the connectedness (i.e. all atoms in a molecule should be connected to each other via a path over bonds), and removes duplicates*. The remaining valid structures are stored in an sqlite database with ASE (at ./models/cgschnet/generated/generated_molecules.db) along with an .npz-file that records certain statistics (e.g. the number of rings of certain sizes, the number of single, double, and triple bonds, the index of the matching training/test data molecule etc. for each molecule).
 
@@ -100,6 +101,7 @@ In order to match the generated structures to training/test data, the QM9 data s
 *_Please note that, as described in the paper, we use molecular fingerprints and canonical smiles representations to identify duplicates which means that different spatial conformers corresponding to the same canonical smiles string are tagged as duplicates and removed in the process. Add '--filters valence disconnected' to the call in order to not remove but keep identified duplicates in the created database._
 
 ### Displaying generated molecules
+
 After filtering, all generated molecules stored in the sqlite database can be displayed with ASE as follows:
 
     python ./cG-SchNet/display_molecules.py --data_path ./models/cgschnet/generated/generated_molecules.db

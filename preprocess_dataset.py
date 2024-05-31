@@ -12,27 +12,37 @@ from pathlib import Path
 
 
 def get_parser():
-    """ Setup parser for command line arguments """
+    """Setup parser for command line arguments"""
     main_parser = argparse.ArgumentParser()
-    main_parser.add_argument('datapath', help='Full path to dataset (e.g. '
-                                              '/home/qm9.db)')
-    main_parser.add_argument('--valence_list',
-                             default=[1, 1, 6, 4, 7, 3, 8, 2, 9, 1], type=int,
-                             nargs='+',
-                             help='The valence of atom types in the form '
-                                  '[type1 valence type2 valence ...] '
-                                  '(default: %(default)s)')
-    main_parser.add_argument('--n_threads', type=int, default=16,
-                             help='Number of extra threads used while '
-                                  'processing the data')
-    main_parser.add_argument('--n_mols_per_thread', type=int, default=100,
-                             help='Number of molecules processed by each '
-                                  'thread in one iteration')
+    main_parser.add_argument(
+        "datapath", help="Full path to dataset (e.g. " "/home/qm9.db)"
+    )
+    main_parser.add_argument(
+        "--valence_list",
+        default=[1, 1, 6, 4, 7, 3, 8, 2, 9, 1],
+        type=int,
+        nargs="+",
+        help="The valence of atom types in the form "
+        "[type1 valence type2 valence ...] "
+        "(default: %(default)s)",
+    )
+    main_parser.add_argument(
+        "--n_threads",
+        type=int,
+        default=16,
+        help="Number of extra threads used while " "processing the data",
+    )
+    main_parser.add_argument(
+        "--n_mols_per_thread",
+        type=int,
+        default=100,
+        help="Number of molecules processed by each " "thread in one iteration",
+    )
     return main_parser
 
 
 def is_disconnected(connectivity):
-    '''
+    """
     Assess whether all atoms of a molecule are connected using a connectivity matrix
 
     Args:
@@ -42,7 +52,7 @@ def is_disconnected(connectivity):
     Returns
         bool: True if the molecule consists of at least two disconnected graphs,
             False if all atoms are connected by some path
-    '''
+    """
     con_mat = connectivity
     seen, queue = {0}, collections.deque([0])  # start at node (atom) 0
     while queue:
@@ -58,7 +68,7 @@ def is_disconnected(connectivity):
 
 
 def get_count_statistics(mol=None, get_stat_heads=False):
-    '''
+    """
     Collects atom, bond, and ring count statistics of a provided molecule
 
     Args:
@@ -71,11 +81,41 @@ def get_count_statistics(mol=None, get_stat_heads=False):
             get_stat_heads parameter to obtain the corresponding row headers (where RX
             describes number of X-membered rings and CXC indicates the number of
             carbon-carbon bonds of order X etc.).
-    '''
-    stat_heads = ['n_atoms', 'C', 'N', 'O', 'F', 'H', 'H1C', 'H1N',
-                  'H1O', 'C1C', 'C2C', 'C3C', 'C1N', 'C2N', 'C3N', 'C1O',
-                  'C2O', 'C1F', 'N1N', 'N2N', 'N1O', 'N2O', 'N1F', 'O1O',
-                  'O1F', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R>8']
+    """
+    stat_heads = [
+        "n_atoms",
+        "C",
+        "N",
+        "O",
+        "F",
+        "H",
+        "H1C",
+        "H1N",
+        "H1O",
+        "C1C",
+        "C2C",
+        "C3C",
+        "C1N",
+        "C2N",
+        "C3N",
+        "C1O",
+        "C2O",
+        "C1F",
+        "N1N",
+        "N2N",
+        "N1O",
+        "N2O",
+        "N1F",
+        "O1O",
+        "O1F",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R>8",
+    ]
     if get_stat_heads:
         return stat_heads
     if mol is None:
@@ -89,8 +129,8 @@ def get_count_statistics(mol=None, get_stat_heads=False):
             idx = key_idx_dict[key]
             stats[idx, 0] = value
     # store simple statistics about number of atoms
-    stats[key_idx_dict['n_atoms'], 0] = mol.n_atoms
-    for key in ['C', 'N', 'O', 'F', 'H']:
+    stats[key_idx_dict["n_atoms"], 0] = mol.n_atoms
+    for key in ["C", "N", "O", "F", "H"]:
         idx = key_idx_dict[key]
         charge = mol.type_charges[key]
         if charge in mol._unique_numbers:
@@ -98,10 +138,17 @@ def get_count_statistics(mol=None, get_stat_heads=False):
     return stats
 
 
-def preprocess_molecules(mol_idcs, source_db, valence,
-                         precompute_distances=True, precompute_fingerprint=False,
-                         remove_invalid=True, invalid_list=None, print_progress=False):
-    '''
+def preprocess_molecules(
+    mol_idcs,
+    source_db,
+    valence,
+    precompute_distances=True,
+    precompute_fingerprint=False,
+    remove_invalid=True,
+    invalid_list=None,
+    print_progress=False,
+):
+    """
     Checks the validity of selected molecules and collects atom, bond,
     and ring count statistics for the valid structures. Molecules are classified as
     invalid if they consist of disconnected parts or fail a valence check, where the
@@ -137,7 +184,7 @@ def preprocess_molecules(mol_idcs, source_db, valence,
         list of int: list with indices of molecules that failed the valency check
         list of int: list with indices of molecules that consist of disconnected parts
         int: number of molecules processed
-    '''
+    """
     # initial setup
     count = 0  # count the number of invalid molecules
     disc = []  # store indices of disconnected molecules
@@ -166,7 +213,7 @@ def preprocess_molecules(mol_idcs, source_db, valence,
             # center positions (using center of mass)
             pos = pos - at.get_center_of_mass()
             # order atoms by distance to center of mass
-            center_dists = np.sqrt(np.maximum(np.sum(pos ** 2, axis=1), 0))
+            center_dists = np.sqrt(np.maximum(np.sum(pos**2, axis=1), 0))
             idcs_sorted = np.argsort(center_dists)
             pos = pos[idcs_sorted]
             numbers = numbers[idcs_sorted]
@@ -220,16 +267,15 @@ def preprocess_molecules(mol_idcs, source_db, valence,
             if precompute_distances:
                 # calculate pairwise distances of atoms and store them in data
                 dists = pdist(pos)[:, None]
-                data.update({'dists': dists})
+                data.update({"dists": dists})
             if precompute_fingerprint:
                 fp = np.array(mol.get_fp().fp, dtype=np.uint32)
-                data.update({'fingerprint': fp})
+                data.update({"fingerprint": fp})
 
             # store compressed connectivity matrix in data
             rand_ord_rev = np.argsort(random_ord)
             con_mat = con_mat[rand_ord_rev][:, rand_ord_rev]
-            data.update(
-                {'con_mat': compressor.compress(con_mat)})
+            data.update({"con_mat": compressor.compress(con_mat)})
 
             # update atom, bond, and ring count statistics
             stats = np.hstack((stats, get_count_statistics(mol=mol)))
@@ -241,14 +287,14 @@ def preprocess_molecules(mol_idcs, source_db, valence,
             # print progress if desired
             if print_progress:
                 if i % 100 == 0:
-                    print('\033[K', end='\r', flush=True)
-                    print(f'{100 * (i + 1) / n_all:.2f}%', end='\r', flush=True)
+                    print("\033[K", end="\r", flush=True)
+                    print(f"{100 * (i + 1) / n_all:.2f}%", end="\r", flush=True)
 
     return mols, data_list, stats, inval, disc, count
 
 
 def _processing_worker(q_in, q_out, task):
-    '''
+    """
     Simple worker function that repeatedly fulfills a task using transmitted input and
     sends back the results until a stop signal is received. Can be used as target in
     a multiprocessing.Process object.
@@ -259,7 +305,7 @@ def _processing_worker(q_in, q_out, task):
             input arguments to the task function
         q_out (multiprocessing.Queue): queue to send results from task back
         task (callable function): function that is called using the received data
-    '''
+    """
     while True:
         data = q_in.get(True)  # receive data
         if data[0]:  # stop if stop signal is received
@@ -268,9 +314,8 @@ def _processing_worker(q_in, q_out, task):
         q_out.put(results)  # send back results
 
 
-def _submit_jobs(qs_out, count, chunk_size, n_all, working_flag,
-                 n_per_thread):
-    '''
+def _submit_jobs(qs_out, count, chunk_size, n_all, working_flag, n_per_thread):
+    """
     Function that submits a job to preprocess molecules to every provided worker.
 
     Args:
@@ -287,7 +332,7 @@ def _submit_jobs(qs_out, count, chunk_size, n_all, working_flag,
             a job
         int: index of the new earliest, not yet preprocessed molecule in
             the db (after the submitted preprocessing jobs have been done)
-    '''
+    """
     # calculate indices of molecules that shall be preprocessed by workers
     idcs = np.arange(count, min(n_all, count + chunk_size))
     start = 0
@@ -303,11 +348,19 @@ def _submit_jobs(qs_out, count, chunk_size, n_all, working_flag,
     return working_flag, new_count
 
 
-def preprocess_dataset(datapath, valence_list, n_threads, n_mols_per_thread=100,
-                       logging_print=True, new_db_path=None, precompute_distances=True,
-                       precompute_fingerprint=False, remove_invalid=True,
-                       invalid_list=None):
-    '''
+def preprocess_dataset(
+    datapath,
+    valence_list,
+    n_threads,
+    n_mols_per_thread=100,
+    logging_print=True,
+    new_db_path=None,
+    precompute_distances=True,
+    precompute_fingerprint=False,
+    remove_invalid=True,
+    invalid_list=None,
+):
+    """
     Pre-processes all molecules of a dataset using the provided valency information.
     Multi-threading is used to speed up the process.
     Along with a new database containing the pre-processed molecules, a
@@ -340,11 +393,11 @@ def preprocess_dataset(datapath, valence_list, n_threads, n_mols_per_thread=100,
         invalid_list (list of int, optional): precomputed list containing indices of
             molecules that are marked as invalid (because they did not pass the
             valency or connectivity checks in earlier runs, default: None)
-    '''
+    """
     # convert paths
     datapath = Path(datapath)
     if new_db_path is None:
-        new_db_path = datapath.parent / (datapath.stem + 'gen.db')
+        new_db_path = datapath.parent / (datapath.stem + "gen.db")
     else:
         new_db_path = Path(new_db_path)
 
@@ -353,7 +406,7 @@ def preprocess_dataset(datapath, valence_list, n_threads, n_mols_per_thread=100,
     valence = np.zeros(max_type + 1, dtype=int)
     valence[valence_list[::2]] = valence_list[1::2]
 
-    def _print(x, end='\n', flush=False):
+    def _print(x, end="\n", flush=False):
         if logging_print:
             logging.info(x)
         else:
@@ -362,13 +415,13 @@ def preprocess_dataset(datapath, valence_list, n_threads, n_mols_per_thread=100,
     with connect(datapath) as db:
         n_all = db.count()
     if n_all == 0:
-        _print('No molecules found in data base!')
+        _print("No molecules found in data base!")
         sys.exit(0)
-    _print('\nPre-processing data...')
+    _print("\nPre-processing data...")
     if logging_print:
-        _print(f'Processed:      0 / {n_all}...')
+        _print(f"Processed:      0 / {n_all}...")
     else:
-        _print(f'0.00%', end='', flush=True)
+        _print(f"0.00%", end="", flush=True)
 
     # initial setup
     n_iterations = 0
@@ -390,8 +443,9 @@ def preprocess_dataset(datapath, valence_list, n_threads, n_mols_per_thread=100,
 
         if precompute_fingerprint:
             # store the system's byte order of unsigned integers (for the fingerprints)
-            new_db.metadata = \
-                {'fingerprint_format': '>u4' if sys.byteorder == 'big' else '<u4'}
+            new_db.metadata = {
+                "fingerprint_format": ">u4" if sys.byteorder == "big" else "<u4"
+            }
 
         if n_threads >= 1:
             # set up threads and queues
@@ -401,25 +455,31 @@ def preprocess_dataset(datapath, valence_list, n_threads, n_mols_per_thread=100,
             for i in range(n_threads):
                 qs_in += [Queue(1)]
                 qs_out += [Queue(1)]
-                threads += \
-                    [Process(target=_processing_worker,
-                             name=str(i),
-                             args=(qs_out[-1],
-                                   qs_in[-1],
-                                   lambda x:
-                                   preprocess_molecules(x,
-                                                        datapath,
-                                                        valence,
-                                                        precompute_distances,
-                                                        precompute_fingerprint,
-                                                        remove_invalid,
-                                                        invalid_list)))]
+                threads += [
+                    Process(
+                        target=_processing_worker,
+                        name=str(i),
+                        args=(
+                            qs_out[-1],
+                            qs_in[-1],
+                            lambda x: preprocess_molecules(
+                                x,
+                                datapath,
+                                valence,
+                                precompute_distances,
+                                precompute_fingerprint,
+                                remove_invalid,
+                                invalid_list,
+                            ),
+                        ),
+                    )
+                ]
                 threads[-1].start()
 
             # submit first round of jobs
-            working_flag, current = \
-                _submit_jobs(qs_out, current, chunk_size, n_all,
-                             working_flag, n_mols_per_thread)
+            working_flag, current = _submit_jobs(
+                qs_out, current, chunk_size, n_all, working_flag, n_mols_per_thread
+            )
 
             while np.any(working_flag == 1):
                 n_iterations += 1
@@ -434,14 +494,14 @@ def preprocess_dataset(datapath, valence_list, n_threads, n_mols_per_thread=100,
                         working_flag[i] = 0
 
                 # submit new jobs
-                working_flag, current_new = \
-                    _submit_jobs(qs_out, current, chunk_size, n_all, working_flag,
-                                 n_mols_per_thread)
+                working_flag, current_new = _submit_jobs(
+                    qs_out, current, chunk_size, n_all, working_flag, n_mols_per_thread
+                )
 
                 # store gathered results
                 for res in results:
                     mols, data_list, _stats, _inval, _disc, _c = res
-                    for (at, data) in zip(mols, data_list):
+                    for at, data in zip(mols, data_list):
                         new_db.write(at, data=data)
                     stats = np.hstack((stats, _stats))
                     inval += _inval
@@ -450,11 +510,10 @@ def preprocess_dataset(datapath, valence_list, n_threads, n_mols_per_thread=100,
 
                 # print progress
                 if logging_print and n_iterations % 10 == 0:
-                    _print(f'Processed: {current:6d} / {n_all}...')
+                    _print(f"Processed: {current:6d} / {n_all}...")
                 elif not logging_print:
-                    _print('\033[K', end='\r', flush=True)
-                    _print(f'{100 * current / n_all:.2f}%', end='\r',
-                           flush=True)
+                    _print("\033[K", end="\r", flush=True)
+                    _print(f"{100 * current / n_all:.2f}%", end="\r", flush=True)
                 current = current_new  # update current position in database
 
             # stop worker threads and join
@@ -463,51 +522,74 @@ def preprocess_dataset(datapath, valence_list, n_threads, n_mols_per_thread=100,
                 threads[i].join()
                 threads[i].terminate()
             if logging_print:
-                _print(f'Processed: {n_all} / {n_all}...')
+                _print(f"Processed: {n_all} / {n_all}...")
 
         else:
-            results = preprocess_molecules(range(n_all), datapath, valence,
-                                           precompute_distances,
-                                           precompute_fingerprint, remove_invalid,
-                                           invalid_list, print_progress=True)
+            results = preprocess_molecules(
+                range(n_all),
+                datapath,
+                valence,
+                precompute_distances,
+                precompute_fingerprint,
+                remove_invalid,
+                invalid_list,
+                print_progress=True,
+            )
             mols, data_list, stats, inval, disc, count = results
-            for (at, data) in zip(mols, data_list):
+            for at, data in zip(mols, data_list):
                 new_db.write(at, data=data)
 
     if not logging_print:
-        _print('\033[K', end='\n', flush=True)
-    _print(f'... successfully validated {n_all - count - n_inval} data '
-           f'points!', flush=True)
+        _print("\033[K", end="\n", flush=True)
+    _print(
+        f"... successfully validated {n_all - count - n_inval} data " f"points!",
+        flush=True,
+    )
     if invalid_list is not None:
-        _print(f'{n_inval} structures were removed because they are on the '
-               f'pre-computed list of invalid molecules!', flush=True)
-        if len(disc)+len(inval) > 0:
-            _print(f'CAUTION: Could not validate {len(disc)+len(inval)} additional '
-                   f'molecules. These were also removed and their indices are '
-                   f'appended to the list of invalid molecules stored at '
-                   f'{datapath.parent / (datapath.stem + f"_invalid.txt")}',
-                   flush=True)
-            np.savetxt(datapath.parent / (datapath.stem + f'_invalid.txt'),
-                       np.append(np.sort(list(invalid_list)), np.sort(inval + disc)),
-                       fmt='%d')
+        _print(
+            f"{n_inval} structures were removed because they are on the "
+            f"pre-computed list of invalid molecules!",
+            flush=True,
+        )
+        if len(disc) + len(inval) > 0:
+            _print(
+                f"CAUTION: Could not validate {len(disc)+len(inval)} additional "
+                f"molecules. These were also removed and their indices are "
+                f"appended to the list of invalid molecules stored at "
+                f'{datapath.parent / (datapath.stem + f"_invalid.txt")}',
+                flush=True,
+            )
+            np.savetxt(
+                datapath.parent / (datapath.stem + f"_invalid.txt"),
+                np.append(np.sort(list(invalid_list)), np.sort(inval + disc)),
+                fmt="%d",
+            )
     elif remove_invalid:
-        _print(f'Identified {len(disc)} disconnected structures, and {len(inval)} '
-               f'structures with invalid valence!', flush=True)
-        np.savetxt(datapath.parent / (datapath.stem + f'_invalid.txt'),
-                   np.sort(inval + disc), fmt='%d')
-    _print('\nCompressing and storing statistics with numpy...')
-    np.savez_compressed(new_db_path.parent/(new_db_path.stem+f'_statistics.npz'),
-                        stats=stats,
-                        stat_heads=get_count_statistics(get_stat_heads=True))
+        _print(
+            f"Identified {len(disc)} disconnected structures, and {len(inval)} "
+            f"structures with invalid valence!",
+            flush=True,
+        )
+        np.savetxt(
+            datapath.parent / (datapath.stem + f"_invalid.txt"),
+            np.sort(inval + disc),
+            fmt="%d",
+        )
+    _print("\nCompressing and storing statistics with numpy...")
+    np.savez_compressed(
+        new_db_path.parent / (new_db_path.stem + f"_statistics.npz"),
+        stats=stats,
+        stat_heads=get_count_statistics(get_stat_heads=True),
+    )
 
     end_time = time.time() - start_time
     m, s = divmod(end_time, 60)
     h, m = divmod(m, 60)
     h, m, s = int(h), int(m), int(s)
-    _print(f'Done! Pre-processing needed {h:d}h{m:02d}m{s:02d}s.')
+    _print(f"Done! Pre-processing needed {h:d}h{m:02d}m{s:02d}s.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()
     preprocess_dataset(**vars(args))

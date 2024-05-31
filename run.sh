@@ -17,33 +17,33 @@ max_epochs=1000
 
 # 训练模型
 python detanet_cond_script.py train \
-    --model detanet \
-    --dataset_name "${dataset_name}" \
-    --datapath "${datapath}" \
-    --modelpath "${modelpath}" \
-    --split_path "${split_path}" \
-    --seed "${seed}" \
-    --features "${features}" \
-    --num_radial "${num_radial}" \
-    --cutoff "${cutoff}" \
-    --num_block "${num_block}" \
-    --maxl "${maxl}" \
-    --lr "${lr}" \
-    --batch_size "${batch_size}" \
-    --max_epochs "${max_epochs}"
+--model detanet \
+--dataset_name "${dataset_name}" \
+--datapath "${datapath}" \
+--modelpath "${modelpath}" \
+--split_path "${split_path}" \
+--seed "${seed}" \
+--features "${features}" \
+--num_radial "${num_radial}" \
+--cutoff "${cutoff}" \
+--num_block "${num_block}" \
+--maxl "${maxl}" \
+--lr "${lr}" \
+--batch_size "${batch_size}" \
+--max_epochs "${max_epochs}"
 
 # 在测试集上评估模型
 python detanet_cond_script.py eval \
-    --model detanet \
-    --datapath "${datapath}" \
-    --modelpath "${modelpath}" \
-    --split test
+--model detanet \
+--datapath "${datapath}" \
+--modelpath "${modelpath}" \
+--split test
 
 # 使用训练好的模型生成分子
 amount=1000
 temp=0.1
 python detanet_cond_script.py generate \
-    --model detanet \
-    --modelpath "${modelpath}" \
-    --amount "${amount}" \
-    --temperature "${temp}"
+--model detanet \
+--modelpath "${modelpath}" \
+--amount "${amount}" \
+--temperature "${temp}"
