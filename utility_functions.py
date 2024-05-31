@@ -1058,8 +1058,8 @@ def generate_molecules(
     store_process=False,
 ):
     """
-    使用经过训练的 G-SchNet 模型生成分子。它包含了许多参数和选项，用于控制生成过程的各个方面
-    Generate molecules using a trained G-SchNet model. The atomic numbers of all
+    使用经过训练的 G-DetaNet 模型生成分子。它包含了许多参数和选项，用于控制生成过程的各个方面
+    Generate molecules using a trained G-DetaNet model. The atomic numbers of all
     chemical elements in the training data and the numbers assigned to focus and
     start token need to be specified. A spherical grid that is re-centered on the
     focused atom at every generation step is used. Its minimum and maximum distance
@@ -1068,7 +1068,7 @@ def generate_molecules(
 
     Args:
         amount (int): the amount of molecules that shall be generated
-        model (schnetpack.atomistic.AtomisticModel): a trained G-SchNet model
+        model (schnetpack.atomistic.AtomisticModel): a trained G-DetaNet model
         t (float, optional): the sampling temperature which controls randomness during
             sampling of atom positions (higher values introduce more randomness,
             default: 0.1)

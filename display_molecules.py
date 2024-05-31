@@ -53,7 +53,7 @@ def get_parser():
         "display molecules from the training data base "
         'instead of generated molecules (e.g. "training C,>8"'
         "). An overview of the available properties for "
-        "molecules generated with G-SchNet trained on QM9 can"
+        "molecules generated with G-DetaNet trained on QM9 can"
         " be found in the README.md.",
         default=None,
     )

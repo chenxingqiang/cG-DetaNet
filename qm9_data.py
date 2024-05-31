@@ -27,7 +27,7 @@ class QM9gen(DownloadableAtomsData):
 
     This class adds convenience functions to download QM9 from figshare,
     pre-process the data such that it can be used for moleculec generation with the
-    G-SchNet model, and load the data into pytorch.
+    G-DetaNet model, and load the data into pytorch.
 
     Args:
         path (str): path to directory containing qm9 database
